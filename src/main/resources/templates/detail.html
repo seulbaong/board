@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        table, tr, td, th {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+<table>
+    <tr>
+        <th>id</th>
+        <td th:text="${board.id}"></td>
+    </tr>
+    <tr>
+        <th>title</th>
+        <td th:text="${board.boardTitle}"></td>
+    </tr>
+    <tr>
+        <th>writer</th>
+        <td th:text="${board.boardWriter}"></td>
+    </tr>
+    <tr>
+        <th>date</th>
+        <td th:text="${board.createdAt}"></td>
+    </tr>
+    <tr>
+        <th>hits</th>
+        <td th:text="${board.boardHits}"></td>
+    </tr>
+    <tr>
+        <th>contents</th>
+        <td th:text="${board.boardContents}"></td>
+    </tr>
+</table>
+<div id="comment-list">
+    <!-- 댓글 리스트가 여기에 들어감 -->
+</div>
+
+<textarea id="comment-content"></textarea>
+<button id="add-comment-btn">댓글 추가</button><br>
+
+<button onclick="listReq()">목록</button>
+<button onclick="updateReq()">수정</button>
+<button onclick="deleteReq()">삭제</button>
+</body>
+<script th:inline="javascript">
+    const listReq = () => {
+        location.href = "/list";
+    }
+    const updateReq = () => {
+        location.href = `/update/[[${board.id}]]`;
+    }
+    const deleteReq = () => {
+        location.href = `/delete/[[${board.id}]]`;
+    }
+    const id = [[${board.id}]];
+
+    $(document).ready(function() {
+        loadComments(id);
+    });
+    // 댓글 조회
+    function loadComments(id) {
+        $.ajax({
+            url: `/comments/list/${id}`,
+            method: 'GET',
+            success: function (data) {
+                $('#comment-list').empty();
+                data.forEach(function (comment) {
+                    $('#comment-list').append(`<div>${comment.content}</div>`);
+                });
+            }
+        });
+    }
+    // 댓글 추가 버튼 클릭 시 실행
+    $('#add-comment-btn').click(function () {
+        const content = $('#comment-content').val().trim();
+        if (content === "") {
+            alert("댓글 내용을 입력해주세요.");
+            return;
+        }
+
+        $.ajax({
+            url: '/comments/add',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ id: id, content: content }),
+            success: function () {
+                loadComments(id);  // 댓글 목록 새로고침
+                $('#comment-content').val('');  // 입력 창 초기화
+            },
+            error: function (xhr, status, error) {
+                console.error("댓글을 추가하는 중 오류 발생:", error);
+            }
+        });
+    });
+</script>
+</html>
